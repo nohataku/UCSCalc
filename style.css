@@ -110,6 +110,52 @@ header h1 {
     color: #888;
 }
 
+/* セクション小計のスタイル */
+.section-subtotal {
+    margin-top: 15px;
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    border-left: 4px solid #3498db;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.subtotal-label {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 1rem;
+}
+
+.subtotal-amount {
+    font-weight: bold;
+    color: #3498db;
+    font-size: 1.1rem;
+}
+
+/* 個別項目の小計スタイル */
+.item-subtotal {
+    margin-top: 5px;
+    padding: 5px 8px;
+    background: #e8f4fd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #2980b9;
+    text-align: center;
+    border: 1px solid #bde3ff;
+    transition: all 0.3s ease;
+}
+
+.item-subtotal:not(:empty) {
+    display: block;
+}
+
+.item-subtotal:empty {
+    display: none;
+}
+
 /* 想定金額セクション */
 .expected-input {
     display: flex;
@@ -224,19 +270,30 @@ header h1 {
 
 .breakdown-item {
     margin-bottom: 10px;
-    padding: 10px;
+    padding: 15px;
     background: white;
-    border-radius: 5px;
+    border-radius: 8px;
     border-left: 4px solid #6c757d;
+    border: 1px solid #e0e0e0;
     transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.breakdown-item.exact {
-    border-left-color: #28a745;
+.breakdown-item:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    transform: translateY(-1px);
 }
 
 .breakdown-item.possible {
     border-left-color: #ffc107;
+}
+
+.breakdown-item.no-suggestions {
+    border-left-color: #6c757d;
+    background: #f8f9fa;
+    color: #6c757d;
+    text-align: center;
+    font-style: italic;
 }
 
 .breakdown-item.checked {
@@ -543,4 +600,79 @@ input:focus {
 
 .expected-input input:focus {
     box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
+}
+
+/* 提案ヘッダーと詳細表示のスタイル */
+.suggestion-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.suggestion-text {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.suggestion-description {
+    flex: 1;
+    line-height: 1.4;
+}
+
+/* 詳細表示ボタン */
+.detail-toggle {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    color: #495057;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.detail-toggle:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.detail-toggle:active {
+    background: #dee2e6;
+    transform: translateY(1px);
+}
+
+/* 詳細情報の表示 */
+.suggestion-detail {
+    margin-top: 12px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 3px solid #007bff;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #495057;
+    font-family: 'Courier New', monospace;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 480px) {
+    .suggestion-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .detail-toggle {
+        align-self: flex-end;
+    }
+    
+    .suggestion-detail {
+        font-size: 12px;
+        padding: 10px;
+    }
 }

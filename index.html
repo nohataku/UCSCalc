@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>レジ下金庫計算アプリ</title>
+    <title>レジ下金庫計算機</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>レジ下金庫計算アプリ</h1>
+            <h1>レジ下金庫計算機</h1>
         </header>
-        <p class="description">レジ下金庫の金額を計算する謎のクソアプリ</p>
+        <p class="description">レジ下金庫の金額を計算する謎のクソ計算機</p>
         
         <main>
             <!-- 理論金額入力 -->
@@ -30,24 +30,32 @@
                 <div class="input-grid">
                     <div class="input-item">
                         <label for="bill-10000">一万円札</label>
-                        <input type="number" id="bill-10000" min="0" value="0" data-value="10000">
+                        <input type="number" id="bill-10000" min="0" value="" data-value="10000">
                         <span class="unit">枚</span>
+                        <div class="item-subtotal" id="bill-10000-subtotal">0円</div>
                     </div>
                     <div class="input-item">
                         <label for="bill-5000">五千円札</label>
-                        <input type="number" id="bill-5000" min="0" value="0" data-value="5000">
+                        <input type="number" id="bill-5000" min="0" value="" data-value="5000">
                         <span class="unit">枚</span>
+                        <div class="item-subtotal" id="bill-5000-subtotal">0円</div>
                     </div>
                     <div class="input-item">
                         <label for="bill-2000">二千円札</label>
-                        <input type="number" id="bill-2000" min="0" value="0" data-value="2000">
+                        <input type="number" id="bill-2000" min="0" value="" data-value="2000">
                         <span class="unit">枚</span>
+                        <div class="item-subtotal" id="bill-2000-subtotal">0円</div>
                     </div>
                     <div class="input-item">
                         <label for="bill-1000">千円札</label>
-                        <input type="number" id="bill-1000" min="0" value="0" data-value="1000">
+                        <input type="number" id="bill-1000" min="0" value="" data-value="1000">
                         <span class="unit">枚</span>
+                        <div class="item-subtotal" id="bill-1000-subtotal">0円</div>
                     </div>
+                </div>
+                <div class="section-subtotal">
+                    <span class="subtotal-label">紙幣小計：</span>
+                    <span class="subtotal-amount" id="bills-subtotal">0円</span>
                 </div>
             </section>
 
@@ -57,40 +65,50 @@
                 <div class="input-grid">
                     <div class="input-item">
                         <label for="roll-500">五百円棒金</label>
-                        <input type="number" id="roll-500" min="0" value="0" data-value="25000">
+                        <input type="number" id="roll-500" min="0" value="" data-value="25000">
                         <span class="unit">本</span>
                         <small>(50枚 = 25,000円)</small>
+                        <div class="item-subtotal" id="roll-500-subtotal">0円</div>
                     </div>
                     <div class="input-item">
                         <label for="roll-100">百円棒金</label>
-                        <input type="number" id="roll-100" min="0" value="0" data-value="5000">
+                        <input type="number" id="roll-100" min="0" value="" data-value="5000">
                         <span class="unit">本</span>
                         <small>(50枚 = 5,000円)</small>
+                        <div class="item-subtotal" id="roll-100-subtotal">0円</div>
                     </div>
                     <div class="input-item">
                         <label for="roll-50">五十円棒金</label>
-                        <input type="number" id="roll-50" min="0" value="0" data-value="2500">
+                        <input type="number" id="roll-50" min="0" value="" data-value="2500">
                         <span class="unit">本</span>
                         <small>(50枚 = 2,500円)</small>
+                        <div class="item-subtotal" id="roll-50-subtotal">0円</div>
                     </div>
                     <div class="input-item">
                         <label for="roll-10">十円棒金</label>
-                        <input type="number" id="roll-10" min="0" value="0" data-value="500">
+                        <input type="number" id="roll-10" min="0" value="" data-value="500">
                         <span class="unit">本</span>
                         <small>(50枚 = 500円)</small>
+                        <div class="item-subtotal" id="roll-10-subtotal">0円</div>
                     </div>
                     <div class="input-item">
                         <label for="roll-5">五円棒金</label>
-                        <input type="number" id="roll-5" min="0" value="0" data-value="250">
+                        <input type="number" id="roll-5" min="0" value="" data-value="250">
                         <span class="unit">本</span>
                         <small>(50枚 = 250円)</small>
+                        <div class="item-subtotal" id="roll-5-subtotal">0円</div>
                     </div>
                     <div class="input-item">
                         <label for="roll-1">一円棒金</label>
-                        <input type="number" id="roll-1" min="0" value="0" data-value="50">
+                        <input type="number" id="roll-1" min="0" value="" data-value="50">
                         <span class="unit">本</span>
                         <small>(50枚 = 50円)</small>
+                        <div class="item-subtotal" id="roll-1-subtotal">0円</div>
                     </div>
+                </div>
+                <div class="section-subtotal">
+                    <span class="subtotal-label">棒金小計：</span>
+                    <span class="subtotal-amount" id="rolls-subtotal">0円</span>
                 </div>
             </section>
 
@@ -100,34 +118,44 @@
                 <div class="input-grid">
                     <div class="input-item">
                         <label for="coin-500">五百円玉</label>
-                        <input type="number" id="coin-500" min="0" value="0" data-value="500">
+                        <input type="number" id="coin-500" min="0" value="" data-value="500">
                         <span class="unit">枚</span>
+                        <div class="item-subtotal" id="coin-500-subtotal">0円</div>
                     </div>
                     <div class="input-item">
                         <label for="coin-100">百円玉</label>
-                        <input type="number" id="coin-100" min="0" value="0" data-value="100">
+                        <input type="number" id="coin-100" min="0" value="" data-value="100">
                         <span class="unit">枚</span>
+                        <div class="item-subtotal" id="coin-100-subtotal">0円</div>
                     </div>
                     <div class="input-item">
                         <label for="coin-50">五十円玉</label>
-                        <input type="number" id="coin-50" min="0" value="0" data-value="50">
+                        <input type="number" id="coin-50" min="0" value="" data-value="50">
                         <span class="unit">枚</span>
+                        <div class="item-subtotal" id="coin-50-subtotal">0円</div>
                     </div>
                     <div class="input-item">
                         <label for="coin-10">十円玉</label>
-                        <input type="number" id="coin-10" min="0" value="0" data-value="10">
+                        <input type="number" id="coin-10" min="0" value="" data-value="10">
                         <span class="unit">枚</span>
+                        <div class="item-subtotal" id="coin-10-subtotal">0円</div>
                     </div>
                     <div class="input-item">
                         <label for="coin-5">五円玉</label>
-                        <input type="number" id="coin-5" min="0" value="0" data-value="5">
+                        <input type="number" id="coin-5" min="0" value="" data-value="5">
                         <span class="unit">枚</span>
+                        <div class="item-subtotal" id="coin-5-subtotal">0円</div>
                     </div>
                     <div class="input-item">
                         <label for="coin-1">一円玉</label>
-                        <input type="number" id="coin-1" min="0" value="0" data-value="1">
+                        <input type="number" id="coin-1" min="0" value="" data-value="1">
                         <span class="unit">枚</span>
+                        <div class="item-subtotal" id="coin-1-subtotal">0円</div>
                     </div>
+                </div>
+                <div class="section-subtotal">
+                    <span class="subtotal-label">硬貨小計：</span>
+                    <span class="subtotal-amount" id="coins-subtotal">0円</span>
                 </div>
             </section>
 

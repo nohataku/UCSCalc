@@ -8,6 +8,14 @@ const differenceStatus = document.getElementById('difference-status');
 const breakdownSection = document.getElementById('breakdown-section');
 const breakdownContent = document.getElementById('breakdown-content');
 
+// 小計表示要素
+const billsSubtotal = document.getElementById('bills-subtotal');
+const rollsSubtotal = document.getElementById('rolls-subtotal');
+const coinsSubtotal = document.getElementById('coins-subtotal');
+
+// グローバルな提案状態を保持
+let suggestionStates = {};
+
 // 通貨の定義
 const currencies = [
     // 紙幣
@@ -49,6 +57,47 @@ function calculateTotal() {
     return total;
 }
 
+// セクション別小計計算関数
+function calculateSubtotals() {
+    let billsTotal = 0;
+    let rollsTotal = 0;
+    let coinsTotal = 0;
+    
+    // 各通貨の個別小計を計算
+    currencies.forEach(currency => {
+        const input = document.getElementById(currency.id);
+        const count = parseInt(input.value) || 0;
+        const value = currency.value;
+        const itemTotal = count * value;
+        
+        // 個別小計を表示
+        const subtotalElement = document.getElementById(currency.id + '-subtotal');
+        if (subtotalElement) {
+            if (count > 0) {
+                subtotalElement.textContent = formatAmount(itemTotal);
+                subtotalElement.style.display = 'block';
+            } else {
+                subtotalElement.textContent = '0円';
+                subtotalElement.style.display = 'none';
+            }
+        }
+        
+        // セクション小計に加算
+        if (currency.type === 'bill') {
+            billsTotal += itemTotal;
+        } else if (currency.type === 'roll') {
+            rollsTotal += itemTotal;
+        } else if (currency.type === 'coin') {
+            coinsTotal += itemTotal;
+        }
+    });
+    
+    // セクション小計を表示
+    billsSubtotal.textContent = formatAmount(billsTotal);
+    rollsSubtotal.textContent = formatAmount(rollsTotal);
+    coinsSubtotal.textContent = formatAmount(coinsTotal);
+}
+
 // 差額分析関数
 function analyzeDifference(actual, expected) {
     const difference = actual - expected;
@@ -69,28 +118,63 @@ function analyzeDifference(actual, expected) {
         ? `理論金額より${formatAmount(absOffset)}多いです。`
         : `理論金額より${formatAmount(absOffset)}不足しています。`;
     
-    // 各通貨での説明可能性をチェック
+    // 1. 単一通貨での完全一致をチェック（高優先度）
     currencies.forEach(currency => {
         if (absOffset % currency.value === 0) {
             const count = absOffset / currency.value;
-            suggestions.push({
-                type: 'exact',
-                description: `${currency.name}が${count}${getUnit(currency.type)}${difference > 0 ? '多い' : '少ない'}可能性があります。`,
-                checked: false,
-                id: `suggestion-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-            });
+            if (count <= 50) { // 現実的な範囲に制限
+                suggestions.push({
+                    type: 'exact',
+                    priority: 1,
+                    description: `${currency.name}が${count}${getUnit(currency.type)}${difference > 0 ? '多い' : '少ない'}`,
+                    detail: `${formatAmount(count * currency.value)} = ${currency.name} × ${count}${getUnit(currency.type)}`,
+                    checked: false,
+                    id: `exact-${currency.id}-${count}`
+                });
+            }
         }
     });
     
-    // 複数通貨の組み合わせでの説明可能性をチェック（簡単なケース）
-    if (suggestions.length === 0) {
-        findCombinations(absOffset, suggestions, difference > 0);
+    // 2. 2つの通貨の組み合わせをチェック（中優先度）
+    if (suggestions.length < 5) {
+        findTwoCurrencyCombinations(absOffset, suggestions, difference > 0);
     }
+    
+    // 3. 3つの通貨の組み合わせをチェック（低優先度）
+    if (suggestions.length < 3) {
+        findThreeCurrencyCombinations(absOffset, suggestions, difference > 0);
+    }
+    
+    // 4. 近似値での可能性をチェック
+    if (suggestions.length < 5) {
+        findApproximateSolutions(absOffset, suggestions, difference > 0);
+    }
+    
+    // 5. 棒金との関連をチェック
+    findRollRelatedSolutions(absOffset, suggestions, difference > 0);
+    
+    // 優先度とタイプでソート
+    suggestions.sort((a, b) => {
+        if (a.priority !== b.priority) return a.priority - b.priority;
+        if (a.type === 'exact' && b.type !== 'exact') return -1;
+        if (a.type !== 'exact' && b.type === 'exact') return 1;
+        return 0;
+    });
+    
+    // 上位10件に制限
+    const limitedSuggestions = suggestions.slice(0, 10);
+    
+    // 保存されているチェック状態を適用
+    limitedSuggestions.forEach(suggestion => {
+        if (suggestionStates[suggestion.id] !== undefined) {
+            suggestion.checked = suggestionStates[suggestion.id];
+        }
+    });
     
     return {
         status,
         message,
-        suggestions
+        suggestions: limitedSuggestions
     };
 }
 
@@ -107,70 +191,202 @@ function getUnit(type) {
     }
 }
 
-// 通貨の組み合わせを探す関数
-function findCombinations(targetAmount, suggestions, isExcess) {
-    // 主要な通貨での組み合わせをチェック
+// 2つの通貨の組み合わせを探す関数（詳細版）
+function findTwoCurrencyCombinations(targetAmount, suggestions, isExcess) {
     const mainCurrencies = [
+        { value: 10000, name: '一万円札', unit: '枚', id: 'bill-10000' },
+        { value: 5000, name: '五千円札', unit: '枚', id: 'bill-5000' },
+        { value: 2000, name: '二千円札', unit: '枚', id: 'bill-2000' },
+        { value: 1000, name: '千円札', unit: '枚', id: 'bill-1000' },
+        { value: 500, name: '五百円玉', unit: '枚', id: 'coin-500' },
+        { value: 100, name: '百円玉', unit: '枚', id: 'coin-100' },
+        { value: 50, name: '五十円玉', unit: '枚', id: 'coin-50' },
+        { value: 10, name: '十円玉', unit: '枚', id: 'coin-10' },
+        { value: 5, name: '五円玉', unit: '枚', id: 'coin-5' },
+        { value: 1, name: '一円玉', unit: '枚', id: 'coin-1' },
+        { value: 25000, name: '五百円棒金', unit: '本', id: 'roll-500' },
+        { value: 5000, name: '百円棒金', unit: '本', id: 'roll-100' },
+        { value: 2500, name: '五十円棒金', unit: '本', id: 'roll-50' },
+        { value: 500, name: '十円棒金', unit: '本', id: 'roll-10' },
+        { value: 250, name: '五円棒金', unit: '本', id: 'roll-5' },
+        { value: 50, name: '一円棒金', unit: '本', id: 'roll-1' }
+    ];
+    
+    // 効率的な探索のため、より大きな金額から開始
+    for (let i = 0; i < mainCurrencies.length; i++) {
+        for (let j = i; j < mainCurrencies.length; j++) {
+            const curr1 = mainCurrencies[i];
+            const curr2 = mainCurrencies[j];
+            
+            // 計算効率を考慮した最大数制限
+            const maxCount1 = Math.min(20, Math.ceil(targetAmount / curr1.value) + 5);
+            const maxCount2 = Math.min(20, Math.ceil(targetAmount / curr2.value) + 5);
+            
+            for (let count1 = 1; count1 <= maxCount1; count1++) {
+                for (let count2 = (i === j ? count1 : 1); count2 <= maxCount2; count2++) {
+                    const totalValue = count1 * curr1.value + count2 * curr2.value;
+                    
+                    if (totalValue === targetAmount) {
+                        const description = i === j 
+                            ? `${curr1.name}が${count1 + count2}${curr1.unit}${isExcess ? '多い' : '少ない'}`
+                            : `${curr1.name}${count1}${curr1.unit}と${curr2.name}${count2}${curr2.unit}が${isExcess ? '多い' : '少ない'}`;
+                        
+                        const detail = i === j
+                            ? `${formatAmount(totalValue)} = ${curr1.name} × ${count1 + count2}${curr1.unit}`
+                            : `${formatAmount(totalValue)} = ${curr1.name} × ${count1}${curr1.unit} + ${curr2.name} × ${count2}${curr2.unit}`;
+                        
+                        suggestions.push({
+                            type: 'combination',
+                            priority: 2,
+                            description,
+                            detail,
+                            checked: false,
+                            id: `combo2-${curr1.id}-${count1}-${curr2.id}-${count2}`
+                        });
+                        
+                        if (suggestions.filter(s => s.type === 'combination').length >= 5) return;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// 3つの通貨の組み合わせを探す関数
+function findThreeCurrencyCombinations(targetAmount, suggestions, isExcess) {
+    const commonCurrencies = [
+        { value: 10000, name: '一万円札', unit: '枚', id: 'bill-10000' },
+        { value: 5000, name: '五千円札', unit: '枚', id: 'bill-5000' },
+        { value: 1000, name: '千円札', unit: '枚', id: 'bill-1000' },
+        { value: 500, name: '五百円玉', unit: '枚', id: 'coin-500' },
+        { value: 100, name: '百円玉', unit: '枚', id: 'coin-100' },
+        { value: 50, name: '五十円玉', unit: '枚', id: 'coin-50' },
+        { value: 10, name: '十円玉', unit: '枚', id: 'coin-10' },
+        { value: 1, name: '一円玉', unit: '枚', id: 'coin-1' }
+    ];
+    
+    // 3つの通貨での組み合わせ（計算量を抑制）
+    for (let i = 0; i < commonCurrencies.length - 2; i++) {
+        for (let j = i + 1; j < commonCurrencies.length - 1; j++) {
+            for (let k = j + 1; k < commonCurrencies.length; k++) {
+                const curr1 = commonCurrencies[i];
+                const curr2 = commonCurrencies[j];
+                const curr3 = commonCurrencies[k];
+                
+                const maxCount = 10; // 3つの組み合わせは少ない数に制限
+                
+                for (let count1 = 1; count1 <= maxCount; count1++) {
+                    for (let count2 = 1; count2 <= maxCount; count2++) {
+                        for (let count3 = 1; count3 <= maxCount; count3++) {
+                            const totalValue = count1 * curr1.value + count2 * curr2.value + count3 * curr3.value;
+                            
+                            if (totalValue === targetAmount) {
+                                suggestions.push({
+                                    type: 'complex',
+                                    priority: 3,
+                                    description: `${curr1.name}${count1}${curr1.unit}、${curr2.name}${count2}${curr2.unit}、${curr3.name}${count3}${curr3.unit}が${isExcess ? '多い' : '少ない'}`,
+                                    detail: `${formatAmount(totalValue)} = ${curr1.name} × ${count1} + ${curr2.name} × ${count2} + ${curr3.name} × ${count3}`,
+                                    checked: false,
+                                    id: `combo3-${curr1.id}-${count1}-${curr2.id}-${count2}-${curr3.id}-${count3}`
+                                });
+                                
+                                if (suggestions.filter(s => s.type === 'complex').length >= 2) return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// 近似値での解を探す関数
+function findApproximateSolutions(targetAmount, suggestions, isExcess) {
+    const currencies = [
         { value: 10000, name: '一万円札', unit: '枚' },
         { value: 5000, name: '五千円札', unit: '枚' },
         { value: 1000, name: '千円札', unit: '枚' },
         { value: 500, name: '五百円玉', unit: '枚' },
         { value: 100, name: '百円玉', unit: '枚' },
         { value: 50, name: '五十円玉', unit: '枚' },
-        { value: 10, name: '十円玉', unit: '枚' },
-        { value: 5, name: '五円玉', unit: '枚' },
-        { value: 1, name: '一円玉', unit: '枚' }
+        { value: 10, name: '十円玉', unit: '枚' }
     ];
     
-    // 2つの通貨の組み合わせをチェック
-    for (let i = 0; i < mainCurrencies.length - 1; i++) {
-        for (let j = i + 1; j < mainCurrencies.length; j++) {
-            const curr1 = mainCurrencies[i];
-            const curr2 = mainCurrencies[j];
+    currencies.forEach(currency => {
+        const exactCount = targetAmount / currency.value;
+        const roundedCount = Math.round(exactCount);
+        
+        if (roundedCount > 0 && roundedCount <= 30) {
+            const approximateAmount = roundedCount * currency.value;
+            const error = Math.abs(approximateAmount - targetAmount);
+            const errorPercentage = (error / targetAmount) * 100;
             
-            // 各通貨の最大計算可能数を制限
-            const maxCount = 10;
-            
-            for (let count1 = 1; count1 <= maxCount; count1++) {
-                for (let count2 = 1; count2 <= maxCount; count2++) {
-                    if (count1 * curr1.value + count2 * curr2.value === targetAmount) {
-                        suggestions.push({
-                            type: 'possible',
-                            description: `${curr1.name}${count1}${curr1.unit}と${curr2.name}${count2}${curr2.unit}が${isExcess ? '多い' : '少ない'}可能性があります。`,
-                            checked: false,
-                            id: `suggestion-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-                        });
-                        if (suggestions.length >= 3) return; // 最大3つまで
-                    }
-                }
+            // 5%以内の誤差で、誤差が500円以下の場合のみ提案
+            if (errorPercentage <= 5 && error <= 500 && error > 0) {
+                suggestions.push({
+                    type: 'approximate',
+                    priority: 4,
+                    description: `${currency.name}約${roundedCount}${currency.unit}の${isExcess ? '過多' : '不足'}（誤差±${formatAmount(error)}）`,
+                    detail: `${formatAmount(approximateAmount)} ≈ ${formatAmount(targetAmount)} (誤差 ${errorPercentage.toFixed(1)}%)`,
+                    checked: false,
+                    id: `approx-${currency.value}-${roundedCount}`
+                });
             }
         }
-    }
+    });
+}
+
+// 棒金関連の解を探す関数
+function findRollRelatedSolutions(targetAmount, suggestions, isExcess) {
+    const rollCurrencies = [
+        { value: 25000, name: '五百円棒金', baseValue: 500, baseUnit: '枚', unit: '本', count: 50 },
+        { value: 5000, name: '百円棒金', baseValue: 100, baseUnit: '枚', unit: '本', count: 50 },
+        { value: 2500, name: '五十円棒金', baseValue: 50, baseUnit: '枚', unit: '本', count: 50 },
+        { value: 500, name: '十円棒金', baseValue: 10, baseUnit: '枚', unit: '本', count: 50 },
+        { value: 250, name: '五円棒金', baseValue: 5, baseUnit: '枚', unit: '本', count: 50 },
+        { value: 50, name: '一円棒金', baseValue: 1, baseUnit: '枚', unit: '本', count: 50 }
+    ];
     
-    // 単一通貨で近似値をチェック
-    if (suggestions.length === 0) {
-        mainCurrencies.forEach(currency => {
-            const count = Math.round(targetAmount / currency.value);
-            if (count > 0 && count <= 20) {
-                const approximateAmount = count * currency.value;
-                const error = Math.abs(approximateAmount - targetAmount);
-                if (error <= targetAmount * 0.1) { // 10%以内の誤差
-                    suggestions.push({
-                        type: 'possible',
-                        description: `${currency.name}約${count}${currency.unit}の${isExcess ? '過多' : '不足'}（誤差${formatAmount(error)}）`,
-                        checked: false,
-                        id: `suggestion-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-                    });
-                }
+    rollCurrencies.forEach(roll => {
+        // 棒金の過不足をチェック
+        if (targetAmount % roll.value === 0) {
+            const rollCount = targetAmount / roll.value;
+            if (rollCount <= 10) {
+                suggestions.push({
+                    type: 'roll',
+                    priority: 2,
+                    description: `${roll.name}が${rollCount}${roll.unit}${isExcess ? '多い' : '少ない'}`,
+                    detail: `${formatAmount(targetAmount)} = ${roll.name} × ${rollCount}${roll.unit} (${roll.baseValue}円硬貨 × ${rollCount * roll.count}${roll.baseUnit})`,
+                    checked: false,
+                    id: `roll-${roll.value}-${rollCount}`
+                });
             }
-        });
-    }
+        }
+        
+        // 棒金の一部（硬貨単位）での過不足をチェック
+        if (targetAmount % roll.baseValue === 0) {
+            const coinCount = targetAmount / roll.baseValue;
+            if (coinCount <= roll.count && coinCount >= 5) { // 5枚以上、1棒金以下
+                suggestions.push({
+                    type: 'partial-roll',
+                    priority: 3,
+                    description: `${roll.baseValue}円硬貨が${coinCount}${roll.baseUnit}${isExcess ? '多い' : '少ない'}（${roll.name}の一部）`,
+                    detail: `${formatAmount(targetAmount)} = ${roll.baseValue}円硬貨 × ${coinCount}${roll.baseUnit}`,
+                    checked: false,
+                    id: `partial-roll-${roll.baseValue}-${coinCount}`
+                });
+            }
+        }
+    });
 }
 
 // 計算実行関数
 function performCalculation() {
     const total = calculateTotal();
     const expected = parseInt(expectedAmountInput.value) || 0;
+    
+    // 小計を更新
+    calculateSubtotals();
     
     // 合計金額表示
     totalAmountDisplay.textContent = formatAmount(total);
@@ -206,46 +422,82 @@ function performCalculation() {
     }
 }
 
-// 提案の表示とソート機能
+// 提案の表示とソート機能（詳細版）
 function displaySuggestions(suggestions) {
-    // チェック状態でソート（チェック済みを下に）
+    // チェック状態でソート（チェック済みを下に）、その後優先度でソート
     const sortedSuggestions = [...suggestions].sort((a, b) => {
         if (a.checked && !b.checked) return 1;
         if (!a.checked && b.checked) return -1;
+        
+        // 優先度でソート
+        if (a.priority !== b.priority) return a.priority - b.priority;
         return 0;
     });
     
     breakdownContent.innerHTML = '';
     
-    sortedSuggestions.forEach(suggestion => {
+    if (sortedSuggestions.length === 0) {
+        breakdownContent.innerHTML = '<div class="breakdown-item no-suggestions">明確な原因を特定できませんでした。<br>計数を再確認するか、複数の要因が重なっている可能性があります。</div>';
+        return;
+    }
+    
+    sortedSuggestions.forEach((suggestion, index) => {
         const item = document.createElement('div');
         item.className = `breakdown-item ${suggestion.type} ${suggestion.checked ? 'checked' : ''}`;
         item.setAttribute('data-id', suggestion.id);
         
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.className = 'suggestion-checkbox';
-        checkbox.checked = suggestion.checked;
+        // 詳細情報の表示/非表示ボタン
+        const detailToggle = suggestion.detail ? 
+            `<button class="detail-toggle" onclick="toggleDetail('${suggestion.id}')">詳細</button>` : '';
+        
+        const itemHTML = `
+            <div class="suggestion-header">
+                <label class="suggestion-label">
+                    <input type="checkbox" class="suggestion-checkbox" ${suggestion.checked ? 'checked' : ''}>
+                    <span class="suggestion-text">
+                        <span class="suggestion-description">${suggestion.description}</span>
+                    </span>
+                </label>
+                ${detailToggle}
+            </div>
+            ${suggestion.detail ? `<div class="suggestion-detail" id="detail-${suggestion.id}" style="display: none;">${suggestion.detail}</div>` : ''}
+        `;
+        
+        item.innerHTML = itemHTML;
+        
+        // チェックボックスイベント
+        const checkbox = item.querySelector('.suggestion-checkbox');
         checkbox.addEventListener('change', () => handleCheckboxChange(suggestion.id, checkbox.checked));
         
-        const label = document.createElement('label');
-        label.className = 'suggestion-label';
-        label.appendChild(checkbox);
-        label.appendChild(document.createTextNode(suggestion.description));
-        
         // ラベルクリックでチェックボックスをトグル
+        const label = item.querySelector('.suggestion-label');
         label.addEventListener('click', (e) => {
-            if (e.target !== checkbox) {
+            if (e.target !== checkbox && !e.target.classList.contains('detail-toggle')) {
                 e.preventDefault();
                 checkbox.checked = !checkbox.checked;
                 handleCheckboxChange(suggestion.id, checkbox.checked);
             }
         });
         
-        item.appendChild(label);
         breakdownContent.appendChild(item);
     });
 }
+
+// 詳細表示の切り替え（グローバル関数）
+window.toggleDetail = function(suggestionId) {
+    const detailElement = document.getElementById(`detail-${suggestionId}`);
+    const toggleButton = document.querySelector(`[data-id="${suggestionId}"] .detail-toggle`);
+    
+    if (detailElement && toggleButton) {
+        if (detailElement.style.display === 'none') {
+            detailElement.style.display = 'block';
+            toggleButton.textContent = '閉じる';
+        } else {
+            detailElement.style.display = 'none';
+            toggleButton.textContent = '詳細';
+        }
+    }
+};
 
 // チェックボックスの変更処理
 function handleCheckboxChange(suggestionId, isChecked) {
@@ -258,6 +510,9 @@ function handleCheckboxChange(suggestionId, isChecked) {
             if (confirmed) {
                 // 提案のチェック状態を更新
                 updateSuggestionState(suggestionId, true);
+                // チェックボックスの状態を即座に更新
+                const checkbox = document.querySelector(`[data-id="${suggestionId}"] .suggestion-checkbox`);
+                checkbox.checked = true;
                 // 再計算して表示を更新
                 performCalculation();
             } else {
@@ -340,34 +595,34 @@ function closeModal(modal) {
 
 // 提案のチェック状態を更新
 function updateSuggestionState(suggestionId, isChecked) {
-    // 現在の分析結果から該当する提案を見つけて更新
-    const total = calculateTotal();
-    const expected = parseInt(expectedAmountInput.value) || 0;
-    
-    if (expected > 0) {
-        const analysis = analyzeDifference(total, expected);
-        const suggestion = analysis.suggestions.find(s => s.id === suggestionId);
-        if (suggestion) {
-            suggestion.checked = isChecked;
-        }
-    }
+    // グローバル状態を更新
+    suggestionStates[suggestionId] = isChecked;
 }
 
 // クリア関数
 function clearAll() {
     currencies.forEach(currency => {
-        document.getElementById(currency.id).value = '0';
+        document.getElementById(currency.id).value = '';
+        // 個別小計もリセット
+        const subtotalElement = document.getElementById(currency.id + '-subtotal');
+        if (subtotalElement) {
+            subtotalElement.textContent = '0円';
+            subtotalElement.style.display = 'none';
+        }
     });
     expectedAmountInput.value = '100000';
     totalAmountDisplay.textContent = '0円';
+    
+    // セクション小計をリセット
+    billsSubtotal.textContent = '0円';
+    rollsSubtotal.textContent = '0円';
+    coinsSubtotal.textContent = '0円';
+    
     differenceSection.style.display = 'none';
     breakdownSection.style.display = 'none';
     
     // チェック状態もリセット
-    const checkboxes = document.querySelectorAll('.suggestion-checkbox');
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = false;
-    });
+    suggestionStates = {};
 }
 
 // リアルタイム計算（入力値変更時）
