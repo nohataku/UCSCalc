@@ -1,0 +1,4 @@
+# GitHub Pages設定
+theme: jekyll-theme-minimal
+title: レジ下金庫計算アプリ
+description: レジ下金庫に保管されている現金の合計金額を計算し、想定金額との差額を分析するWebアプリケーション

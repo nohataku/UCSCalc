@@ -1,0 +1,352 @@
+/* リセットとベーススタイル */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* ヘッダー */
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+header h1 {
+    color: #2c3e50;
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+/* 説明文 */
+.description {
+    text-align: center;
+    color: #7f8c8d;
+    font-size: 1.2rem;
+    margin: 10px auto 30px;
+    max-width: 600px;
+    line-height: 1.5;
+    font-style: italic;
+    padding: 0 20px;
+}
+
+/* セクション共通スタイル */
+.currency-section,
+.expected-section,
+.result-section,
+.actions {
+    background: white;
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.currency-section h2,
+.expected-section h2,
+.result-section h2 {
+    color: #34495e;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 10px;
+}
+
+/* 入力グリッド */
+.input-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.input-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.input-item label {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #2c3e50;
+    font-size: 1rem;
+}
+
+.input-item input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.input-item input:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+.input-item .unit {
+    margin-top: 5px;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.input-item small {
+    margin-top: 2px;
+    font-size: 0.8rem;
+    color: #888;
+}
+
+/* 想定金額セクション */
+.expected-input {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.expected-input label {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+.expected-input input {
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 1.1rem;
+    min-width: 200px;
+}
+
+.expected-input input:focus {
+    outline: none;
+    border-color: #e74c3c;
+}
+
+.expected-input .unit {
+    font-size: 1.1rem;
+    color: #666;
+}
+
+/* 結果セクション */
+.total-amount {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.amount-display {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #27ae60;
+    background: #ecf0f1;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 10px;
+}
+
+.difference {
+    margin-bottom: 25px;
+    padding: 20px;
+    border-radius: 8px;
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+}
+
+.difference h3 {
+    color: #856404;
+    margin-bottom: 10px;
+}
+
+.difference-amount {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.difference-status {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.difference.positive {
+    background: #d1ecf1;
+    border-color: #bee5eb;
+}
+
+.difference.positive h3,
+.difference.positive .difference-status {
+    color: #0c5460;
+}
+
+.difference.positive .difference-amount {
+    color: #007bff;
+}
+
+.difference.negative {
+    background: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.difference.negative h3,
+.difference.negative .difference-status {
+    color: #721c24;
+}
+
+.difference.negative .difference-amount {
+    color: #dc3545;
+}
+
+.breakdown {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.breakdown h3 {
+    color: #495057;
+    margin-bottom: 15px;
+}
+
+.breakdown-item {
+    margin-bottom: 10px;
+    padding: 10px;
+    background: white;
+    border-radius: 5px;
+    border-left: 4px solid #6c757d;
+}
+
+.breakdown-item.exact {
+    border-left-color: #28a745;
+}
+
+.breakdown-item.possible {
+    border-left-color: #ffc107;
+}
+
+/* ボタン */
+.actions {
+    text-align: center;
+}
+
+.btn {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-secondary {
+    background: #95a5a6;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #7f8c8d;
+    transform: translateY(-2px);
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+    
+    header h1 {
+        font-size: 2rem;
+    }
+    
+    .description {
+        font-size: 1.1rem;
+        margin: 10px auto 25px;
+        padding: 0 15px;
+    }
+    
+    .input-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .expected-input {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .expected-input input {
+        min-width: auto;
+    }
+    
+    .amount-display {
+        font-size: 2rem;
+    }
+    
+    .btn {
+        width: auto;
+        margin: 0;
+        padding: 15px 40px;
+    }
+}
+
+@media (max-width: 480px) {
+    .currency-section,
+    .expected-section,
+    .result-section,
+    .actions {
+        padding: 15px;
+    }
+    
+    .amount-display {
+        font-size: 1.8rem;
+        padding: 15px;
+    }
+    
+    .description {
+        font-size: 1rem;
+        margin: 10px auto 20px;
+        padding: 0 10px;
+    }
+}
+
+/* アニメーション */
+.currency-section,
+.expected-section,
+.result-section,
+.actions {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* フォーカス時のエフェクト */
+input:focus {
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.expected-input input:focus {
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
+}
