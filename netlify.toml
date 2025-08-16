@@ -1,13 +1,16 @@
 [build]
-  # ビルドコマンド（静的サイトのため不要）
-  command = ""
+  # 静的サイト用の設定
+  command = "chmod +x build.sh && ./build.sh"
   
   # 公開ディレクトリ（ルートディレクトリを指定）
   publish = "."
 
 [build.environment]
-  # Node.jsのバージョン（必要に応じて）
+  # Node.jsのバージョン
   NODE_VERSION = "18"
+  
+  # 静的サイトであることを明示
+  STATIC_SITE = "true"
 
 # リダイレクト設定
 [[redirects]]

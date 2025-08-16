@@ -1,0 +1,18 @@
+{
+  "name": "ucscalc",
+  "version": "1.0.0",
+  "description": "レジ下金庫の現金合計を計算し、理論金額との差額を分析するWebアプリケーション",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "build": "echo 'Static site - no build required'"
+  },
+  "keywords": ["cash", "calculator", "retail", "register"],
+  "author": "nohataku",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nohataku/UCSCalc.git"
+  },
+  "homepage": "https://ucscalc.netlify.app"
+}
