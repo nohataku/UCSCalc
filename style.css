@@ -228,6 +228,7 @@ header h1 {
     background: white;
     border-radius: 5px;
     border-left: 4px solid #6c757d;
+    transition: all 0.3s ease;
 }
 
 .breakdown-item.exact {
@@ -236,6 +237,199 @@ header h1 {
 
 .breakdown-item.possible {
     border-left-color: #ffc107;
+}
+
+.breakdown-item.checked {
+    background: #f8f9fa;
+    opacity: 0.7;
+    order: 1;
+}
+
+.breakdown-item:not(.checked) {
+    order: 0;
+}
+
+/* チェックボックスのスタイル */
+.suggestion-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    cursor: pointer;
+    width: 100%;
+    padding: 5px 0;
+}
+
+.suggestion-checkbox {
+    display: none; /* デフォルトのチェックボックスを非表示 */
+}
+
+/* カスタムチェックボックス */
+.suggestion-label::before {
+    content: '';
+    width: 24px;
+    height: 24px;
+    border: 3px solid #ddd;
+    border-radius: 6px;
+    background: white;
+    flex-shrink: 0;
+    margin-top: 2px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.suggestion-label:hover::before {
+    border-color: #3498db;
+    box-shadow: 0 0 8px rgba(52, 152, 219, 0.3);
+}
+
+.suggestion-checkbox:checked + .suggestion-label::before,
+.breakdown-item.checked .suggestion-label::before {
+    background: #28a745;
+    border-color: #28a745;
+}
+
+.suggestion-checkbox:checked + .suggestion-label::after,
+.breakdown-item.checked .suggestion-label::after {
+    content: '✓';
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    pointer-events: none;
+}
+
+.breakdown-item.checked .suggestion-label {
+    text-decoration: line-through;
+    color: #6c757d;
+}
+
+/* ソート用のFlexbox */
+#breakdown-content {
+    display: flex;
+    flex-direction: column;
+}
+
+/* モバイル向けモーダルダイアログ */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    padding: 30px 25px;
+    margin: 20px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    transform: translateY(50px);
+    transition: transform 0.3s ease;
+    text-align: center;
+}
+
+.modal-overlay.show .modal-content {
+    transform: translateY(0);
+}
+
+.modal-title {
+    font-size: 1.4rem;
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.modal-message {
+    font-size: 1.1rem;
+    color: #555;
+    margin-bottom: 25px;
+    line-height: 1.5;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.modal-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 80px;
+}
+
+.modal-btn-primary {
+    background: #3498db;
+    color: white;
+}
+
+.modal-btn-primary:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+}
+
+.modal-btn-secondary {
+    background: #95a5a6;
+    color: white;
+}
+
+.modal-btn-secondary:hover {
+    background: #7f8c8d;
+    transform: translateY(-2px);
+}
+
+/* モバイル向けのタッチフレンドリーなサイズ調整 */
+@media (max-width: 768px) {
+    .suggestion-label::before {
+        width: 28px;
+        height: 28px;
+        border-width: 3px;
+    }
+    
+    .suggestion-checkbox:checked + .suggestion-label::after,
+    .breakdown-item.checked .suggestion-label::after {
+        left: 9px;
+        top: 9px;
+        font-size: 16px;
+    }
+    
+    .modal-content {
+        padding: 25px 20px;
+        margin: 15px;
+    }
+    
+    .modal-btn {
+        padding: 14px 20px;
+        font-size: 1.1rem;
+        min-width: 90px;
+    }
 }
 
 /* ボタン */

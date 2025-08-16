@@ -1,6 +1,12 @@
 # レジ下金庫計算アプリ
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/YOUR_SITE_ID/deploy-status)](https://app.netlify.com/sites/YOUR_SITE_NAME/deploys)
+
 レジ下金庫に保管されている現金の合計金額を計算するWebアプリケーションです。
+
+## 🌐 ライブデモ
+
+[https://ucscalc.netlify.app/](https://ucscalc.netlify.app/)
 
 ## 機能
 
@@ -50,7 +56,37 @@
 - **HTML5**: セマンティックなマークアップ
 - **CSS3**: レスポンシブデザイン、アニメーション
 - **JavaScript**: バニラJS、リアルタイム計算
-- **GitHub Pages**: 静的サイトホスティング
+- **PWA対応**: オフライン利用、ホーム画面追加
+- **Netlify**: 静的サイトホスティング、CDN配信
+
+## デプロイ
+
+### Netlify（推奨）
+
+1. **GitHubリポジトリの接続**
+   ```bash
+   # GitHubにプッシュ
+   git add .
+   git commit -m "Initial commit"
+   git push origin main
+   ```
+
+2. **Netlifyでのデプロイ設定**
+   - [Netlify](https://netlify.com) にログイン
+   - "New site from Git" を選択
+   - GitHubリポジトリを選択
+   - ビルド設定は自動検出（netlify.toml使用）
+   - Deploy site をクリック
+
+3. **カスタムドメイン設定（オプション）**
+   - Site settings > Domain management
+   - Custom domain を追加
+
+### 手動デプロイ
+```bash
+# ファイルをZIPでアップロード
+zip -r ucscalc.zip . -x "*.git*" "README.md"
+```
 
 ## ブラウザ対応
 
@@ -61,13 +97,15 @@
 
 ## インストール・セットアップ
 
-このアプリはGitHub Pagesでホストされており、ブラウザから直接アクセスできます。
+このアプリはNetlifyでホストされており、ブラウザから直接アクセスできます。
+
+**ライブサイト**: [https://ucscalc.netlify.app/](https://ucscalc.netlify.app/)
 
 ローカルで実行する場合：
 
 ```bash
 # リポジトリをクローン
-git clone [リポジトリURL]
+git clone https://github.com/nohataku/UCSCalc.git
 
 # ディレクトリに移動
 cd UCSCalc

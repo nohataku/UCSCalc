@@ -59,15 +59,15 @@ function analyzeDifference(actual, expected) {
     if (difference === 0) {
         return {
             status: '一致',
-            message: '想定金額と実際の金額が一致しています。',
+            message: '理論金額と実際の金額が一致しています。',
             suggestions: []
         };
     }
     
     const status = difference > 0 ? '過多' : '不足';
     const message = difference > 0 
-        ? `想定金額より${formatAmount(absOffset)}多いです。`
-        : `想定金額より${formatAmount(absOffset)}不足しています。`;
+        ? `理論金額より${formatAmount(absOffset)}多いです。`
+        : `理論金額より${formatAmount(absOffset)}不足しています。`;
     
     // 各通貨での説明可能性をチェック
     currencies.forEach(currency => {
@@ -75,7 +75,9 @@ function analyzeDifference(actual, expected) {
             const count = absOffset / currency.value;
             suggestions.push({
                 type: 'exact',
-                description: `${currency.name}が${count}${getUnit(currency.type)}${difference > 0 ? '多い' : '少ない'}可能性があります。`
+                description: `${currency.name}が${count}${getUnit(currency.type)}${difference > 0 ? '多い' : '少ない'}可能性があります。`,
+                checked: false,
+                id: `suggestion-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
             });
         }
     });
@@ -134,7 +136,9 @@ function findCombinations(targetAmount, suggestions, isExcess) {
                     if (count1 * curr1.value + count2 * curr2.value === targetAmount) {
                         suggestions.push({
                             type: 'possible',
-                            description: `${curr1.name}${count1}${curr1.unit}と${curr2.name}${count2}${curr2.unit}が${isExcess ? '多い' : '少ない'}可能性があります。`
+                            description: `${curr1.name}${count1}${curr1.unit}と${curr2.name}${count2}${curr2.unit}が${isExcess ? '多い' : '少ない'}可能性があります。`,
+                            checked: false,
+                            id: `suggestion-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
                         });
                         if (suggestions.length >= 3) return; // 最大3つまで
                     }
@@ -153,7 +157,9 @@ function findCombinations(targetAmount, suggestions, isExcess) {
                 if (error <= targetAmount * 0.1) { // 10%以内の誤差
                     suggestions.push({
                         type: 'possible',
-                        description: `${currency.name}約${count}${currency.unit}の${isExcess ? '過多' : '不足'}（誤差${formatAmount(error)}）`
+                        description: `${currency.name}約${count}${currency.unit}の${isExcess ? '過多' : '不足'}（誤差${formatAmount(error)}）`,
+                        checked: false,
+                        id: `suggestion-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
                     });
                 }
             }
@@ -169,7 +175,7 @@ function performCalculation() {
     // 合計金額表示
     totalAmountDisplay.textContent = formatAmount(total);
     
-    // 想定金額が入力されている場合のみ差額分析を実行
+    // 理論金額が入力されている場合のみ差額分析を実行
     if (expected > 0) {
         const analysis = analyzeDifference(total, expected);
         
@@ -189,14 +195,7 @@ function performCalculation() {
         // 差額分析結果表示
         if (analysis.suggestions.length > 0) {
             breakdownSection.style.display = 'block';
-            breakdownContent.innerHTML = '';
-            
-            analysis.suggestions.forEach(suggestion => {
-                const item = document.createElement('div');
-                item.className = `breakdown-item ${suggestion.type}`;
-                item.textContent = suggestion.description;
-                breakdownContent.appendChild(item);
-            });
+            displaySuggestions(analysis.suggestions);
         } else {
             breakdownContent.innerHTML = '<div class="breakdown-item">明確な原因を特定できませんでした。再度確認してください。</div>';
             breakdownSection.style.display = 'block';
@@ -207,15 +206,168 @@ function performCalculation() {
     }
 }
 
+// 提案の表示とソート機能
+function displaySuggestions(suggestions) {
+    // チェック状態でソート（チェック済みを下に）
+    const sortedSuggestions = [...suggestions].sort((a, b) => {
+        if (a.checked && !b.checked) return 1;
+        if (!a.checked && b.checked) return -1;
+        return 0;
+    });
+    
+    breakdownContent.innerHTML = '';
+    
+    sortedSuggestions.forEach(suggestion => {
+        const item = document.createElement('div');
+        item.className = `breakdown-item ${suggestion.type} ${suggestion.checked ? 'checked' : ''}`;
+        item.setAttribute('data-id', suggestion.id);
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'suggestion-checkbox';
+        checkbox.checked = suggestion.checked;
+        checkbox.addEventListener('change', () => handleCheckboxChange(suggestion.id, checkbox.checked));
+        
+        const label = document.createElement('label');
+        label.className = 'suggestion-label';
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(suggestion.description));
+        
+        // ラベルクリックでチェックボックスをトグル
+        label.addEventListener('click', (e) => {
+            if (e.target !== checkbox) {
+                e.preventDefault();
+                checkbox.checked = !checkbox.checked;
+                handleCheckboxChange(suggestion.id, checkbox.checked);
+            }
+        });
+        
+        item.appendChild(label);
+        breakdownContent.appendChild(item);
+    });
+}
+
+// チェックボックスの変更処理
+function handleCheckboxChange(suggestionId, isChecked) {
+    if (isChecked) {
+        // 該当する提案の内容を取得
+        const suggestionElement = document.querySelector(`[data-id="${suggestionId}"] .suggestion-label`);
+        const suggestionText = suggestionElement ? suggestionElement.textContent.trim() : 'この項目';
+        
+        showConfirmModal('確認しましたか？', `「${suggestionText}」を確認済みとしてマークします。`, (confirmed) => {
+            if (confirmed) {
+                // 提案のチェック状態を更新
+                updateSuggestionState(suggestionId, true);
+                // 再計算して表示を更新
+                performCalculation();
+            } else {
+                // チェックを元に戻す
+                const checkbox = document.querySelector(`[data-id="${suggestionId}"] .suggestion-checkbox`);
+                checkbox.checked = false;
+            }
+        });
+    } else {
+        // チェックを外す場合は確認なし
+        updateSuggestionState(suggestionId, false);
+        performCalculation();
+    }
+}
+
+// カスタムモーダルダイアログの表示
+function showConfirmModal(title, message, callback) {
+    // モーダルHTML作成
+    const modalHTML = `
+        <div class="modal-overlay" id="confirmModal">
+            <div class="modal-content">
+                <div class="modal-title">${title}</div>
+                <div class="modal-message">${message}</div>
+                <div class="modal-buttons">
+                    <button class="modal-btn modal-btn-primary" id="modalConfirm">はい</button>
+                    <button class="modal-btn modal-btn-secondary" id="modalCancel">いいえ</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // モーダルをDOMに追加
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    const modal = document.getElementById('confirmModal');
+    const confirmBtn = document.getElementById('modalConfirm');
+    const cancelBtn = document.getElementById('modalCancel');
+    
+    // モーダル表示
+    setTimeout(() => modal.classList.add('show'), 10);
+    
+    // ボタンイベント
+    confirmBtn.addEventListener('click', () => {
+        closeModal(modal);
+        callback(true);
+    });
+    
+    cancelBtn.addEventListener('click', () => {
+        closeModal(modal);
+        callback(false);
+    });
+    
+    // オーバーレイクリックで閉じる
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal(modal);
+            callback(false);
+        }
+    });
+    
+    // ESCキーで閉じる
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            closeModal(modal);
+            callback(false);
+            document.removeEventListener('keydown', handleEscape);
+        }
+    };
+    document.addEventListener('keydown', handleEscape);
+}
+
+// モーダルを閉じる
+function closeModal(modal) {
+    modal.classList.remove('show');
+    setTimeout(() => {
+        if (modal.parentNode) {
+            modal.parentNode.removeChild(modal);
+        }
+    }, 300);
+}
+
+// 提案のチェック状態を更新
+function updateSuggestionState(suggestionId, isChecked) {
+    // 現在の分析結果から該当する提案を見つけて更新
+    const total = calculateTotal();
+    const expected = parseInt(expectedAmountInput.value) || 0;
+    
+    if (expected > 0) {
+        const analysis = analyzeDifference(total, expected);
+        const suggestion = analysis.suggestions.find(s => s.id === suggestionId);
+        if (suggestion) {
+            suggestion.checked = isChecked;
+        }
+    }
+}
+
 // クリア関数
 function clearAll() {
     currencies.forEach(currency => {
         document.getElementById(currency.id).value = '0';
     });
-    expectedAmountInput.value = '0';
+    expectedAmountInput.value = '100000';
     totalAmountDisplay.textContent = '0円';
     differenceSection.style.display = 'none';
     breakdownSection.style.display = 'none';
+    
+    // チェック状態もリセット
+    const checkboxes = document.querySelectorAll('.suggestion-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
 }
 
 // リアルタイム計算（入力値変更時）
