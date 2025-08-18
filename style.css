@@ -676,3 +676,50 @@ input:focus {
         padding: 10px;
     }
 }
+
+/* 現在時刻表示 */
+.current-time {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(52, 152, 219, 0.9);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    transition: all 0.3s ease;
+    user-select: none;
+    pointer-events: none;
+    letter-spacing: 0.5px;
+}
+
+.current-time:hover {
+    background: rgba(52, 152, 219, 1);
+    transform: scale(1.05);
+}
+
+/* モバイル対応 */
+@media (max-width: 768px) {
+    .current-time {
+        bottom: 15px;
+        right: 15px;
+        font-size: 16px;
+        font-weight: 700;
+        padding: 10px 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .current-time {
+        bottom: 10px;
+        right: 10px;
+        font-size: 14px;
+        font-weight: 700;
+        padding: 8px 12px;
+    }
+}

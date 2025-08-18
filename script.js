@@ -641,6 +641,7 @@ clearBtn.addEventListener('click', clearAll);
 document.addEventListener('DOMContentLoaded', function() {
     setupRealTimeCalculation();
     performCalculation(); // 初期計算実行
+    startTimeUpdate(); // 時刻表示開始
 });
 
 // キーボードショートカット
@@ -673,3 +674,30 @@ expectedAmountInput.addEventListener('input', function() {
         this.value = Math.floor(parseFloat(this.value));
     }
 });
+
+// 現在時刻表示機能
+function updateCurrentTime() {
+    const timeElement = document.getElementById('current-time');
+    if (timeElement) {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('ja-JP', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
+        const dateString = now.toLocaleDateString('ja-JP', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+        
+        timeElement.textContent = `${dateString} ${timeString}`;
+    }
+}
+
+// 時刻を1秒ごとに更新
+function startTimeUpdate() {
+    updateCurrentTime(); // 初回表示
+    setInterval(updateCurrentTime, 1000); // 1秒ごとに更新
+}
